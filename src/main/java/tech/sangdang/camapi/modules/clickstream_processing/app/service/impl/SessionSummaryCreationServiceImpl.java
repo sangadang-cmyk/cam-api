@@ -27,34 +27,36 @@ public class SessionSummaryCreationServiceImpl implements SessionSummaryCreation
      */
     @Override
     public Mono<Void> createSessionSummaryFromEvent(CreateSessionSummaryFromEventCommand command) {
-        return sessionSummaryRepository.findById(command.getSessionId())
-                // if session id found
-                .flatMap(existing -> {
-                    existing.setPageCount(existing.getPageCount() + 1);
-                    if (existing.getLastEventTime() == null || existing.getLastEventTime().isBefore(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC))) {
-                        existing.setLastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC));
-                        existing.setDurationSec(calculateDurationSec(existing.getFirstEventTime(), existing.getLastEventTime()));
-                    }
-                    return sessionSummaryRepository.save(existing);
-                })
+        return Mono.defer(() -> sessionSummaryRepository.findById(command.getSessionId())
+                        // if session id found
+                        .flatMap(existing -> {
+                            existing.setPageCount(existing.getPageCount() + 1);
+                            if (existing.getLastEventTime() == null || existing.getLastEventTime().isBefore(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC))) {
+                                existing.setLastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC));
+                                existing.setDurationSec(calculateDurationSec(existing.getFirstEventTime(), existing.getLastEventTime()));
+                            }
+                            return sessionSummaryRepository.save(existing);
+                        })
+
+                        // if session id not found
+                        .switchIfEmpty(Mono.defer(() -> {
+                            SessionSummary sessionSummary = SessionSummary.builder()
+                                    .userId(command.getUserId())
+                                    .pageCount(1)
+                                    .firstEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()),
+                                            ZoneOffset.UTC))
+                                    .lastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()),
+                                            ZoneOffset.UTC))
+                                    .durationSec(0)
+                                    .id(command.getSessionId())
+                                    .build();
+                            return sessionSummaryRepository.save(sessionSummary);
+                        })))
+                // With this and @Version, it should retry up to 6 times when there's a version conflict. This avoids race conditions
                 .retryWhen(Retry
                         .backoff(6, Duration.ofMillis(100))
                         .filter(e -> e instanceof CosmosAccessException)
                 )
-                // if session id not found
-                .switchIfEmpty(Mono.defer(() -> {
-                    SessionSummary sessionSummary = SessionSummary.builder()
-                            .userId(command.getUserId())
-                            .pageCount(1)
-                            .firstEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()),
-                                    ZoneOffset.UTC))
-                            .lastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()),
-                                    ZoneOffset.UTC))
-                            .durationSec(0)
-                            .id(command.getSessionId())
-                            .build();
-                    return sessionSummaryRepository.save(sessionSummary);
-                }))
                 .then();
     }
 
