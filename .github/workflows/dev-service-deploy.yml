@@ -1,4 +1,4 @@
-name: dev-service_deploy.yml
+name: dev-service-deploy.yml
 on:
   push:
     tags:
