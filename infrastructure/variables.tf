@@ -31,7 +31,7 @@ variable "github_environment" {
 
 variable "github_org" {
   type    = string
-  default = "sangdang-cmyk"
+  default = "sangadang-cmyk"
 }
 
 variable "github_repo" {
