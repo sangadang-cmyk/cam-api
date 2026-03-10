@@ -9,9 +9,6 @@ spring:
         endpoint: ${AZURE_COSMOS_ENDPOINT}
         database: ${AZURE_COSMOS_DATABASE}
         populate-query-metrics: true
-      credential:
-        client-id: ${AZURE_MANAGED_IDENTITY_CLIENT_ID}
-        managed-identity-enabled: true
   config:
     import:
       - optional:file:.env.infra[.properties]
@@ -24,4 +21,3 @@ custom:
         storage-account-endpoint: ${AZURE_STORAGE_ACCOUNT_ENDPOINT}
         storage-container-name: ${AZURE_STORAGE_CHECKPOINT_CONTAINER}
         event-hub-namespace: ${AZURE_EVENTHUB_NAMESPACE}
-    full-access-client-id: ${AZURE_MANAGED_IDENTITY_CLIENT_ID}

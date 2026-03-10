@@ -187,6 +187,10 @@ resource "azurerm_container_app" "this" {
           value = env.value
         }
       }
+      env {
+        name = "SPRING_PROFILES_ACTIVE"
+        value = "cloud-dev"
+      }
     }
   }
   registry {

@@ -1,0 +1,9 @@
+spring:
+  cloud:
+    azure:
+      credential:
+        client-id: ${AZURE_MANAGED_IDENTITY_CLIENT_ID}
+        managed-identity-enabled: true
+custom:
+  azure:
+    full-access-client-id: ${AZURE_MANAGED_IDENTITY_CLIENT_ID}

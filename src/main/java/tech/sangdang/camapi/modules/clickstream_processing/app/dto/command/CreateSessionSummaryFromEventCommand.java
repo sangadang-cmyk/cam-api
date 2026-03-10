@@ -8,4 +8,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
 public class CreateSessionSummaryFromEventCommand {
+    private String userId;
+    private String sessionId;
+    private String eventType;
+    private String pageUrl;
+    private Long timestamp;
 }

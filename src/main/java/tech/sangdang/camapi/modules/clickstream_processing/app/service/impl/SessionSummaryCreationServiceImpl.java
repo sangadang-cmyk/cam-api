@@ -6,13 +6,47 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import tech.sangdang.camapi.modules.clickstream_processing.app.dto.command.CreateSessionSummaryFromEventCommand;
 import tech.sangdang.camapi.modules.clickstream_processing.app.service.SessionSummaryCreationService;
+import tech.sangdang.camapi.modules.clickstream_processing.domain.SessionSummary;
+import tech.sangdang.camapi.modules.clickstream_processing.domain.SessionSummaryRepository;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class SessionSummaryCreationServiceImpl implements SessionSummaryCreationService {
+    private final SessionSummaryRepository sessionSummaryRepository;
+    
     @Override
     public Mono<Void> createSessionSummaryFromEvent(CreateSessionSummaryFromEventCommand command) {
-        return Mono.empty();
+        return sessionSummaryRepository.findById(command.getSessionId())
+                // if session id found
+                .flatMap(existing -> {
+                    existing.setPageCount(existing.getPageCount() + 1);
+                    existing.setLastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC));
+                    existing.setDurationSec(calculateDurationSec(existing.getFirstEventTime(), existing.getLastEventTime()));
+                    return sessionSummaryRepository.save(existing);
+                })
+                // if session id not found
+                .switchIfEmpty(Mono.defer(() -> {
+                    SessionSummary sessionSummary = SessionSummary.builder()
+                            .userId(command.getUserId())
+                            .pageCount(1)
+                            .firstEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()),
+                                    ZoneOffset.UTC))
+                            .lastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()),
+                                    ZoneOffset.UTC))
+                            .durationSec(0)
+                            .id(command.getSessionId())
+                            .build();
+                    return sessionSummaryRepository.save(sessionSummary);
+                }))
+                .then();
+    }
+    
+    private Integer calculateDurationSec(LocalDateTime firstEventTime, LocalDateTime lastEventTime) {
+        return (int) (lastEventTime.toEpochSecond(ZoneOffset.UTC) - firstEventTime.toEpochSecond(ZoneOffset.UTC));
     }
 }

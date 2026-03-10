@@ -17,8 +17,7 @@ import java.util.UUID;
 @Container(containerName = "session_summaries")
 public class SessionSummary {
     @Id
-    @Builder.Default
-    private String id = UUID.randomUUID().toString();
+    private String id;
     @PartitionKey
     private String userId;
     private Integer pageCount;
