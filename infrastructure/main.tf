@@ -127,22 +127,12 @@ resource "azurerm_storage_container" "evh_checkpoint" {
   storage_account_id    = azurerm_storage_account.this.id
   container_access_type = "private"
 }
-# resource "azurerm_role_assignment" "this_evh_checkpoint" {
-#   scope                = azurerm_storage_container.evh_checkpoint.id
-#   principal_id         = azurerm_user_assigned_identity.this.principal_id
-#   role_definition_name = "Storage Blob Data Contributor"
-# }
 # Used for EventHub capture
 resource "azurerm_storage_container" "evh_event_log" {
   name                  = "stb-evh-event-log-${var.core_app_code}-${var.core_environment}"
   storage_account_id    = azurerm_storage_account.this.id
   container_access_type = "private"
 }
-# resource "azurerm_role_assignment" "this_evh_event_log" {
-#   scope                = azurerm_storage_container.evh_event_log.id
-#   principal_id         = azurerm_user_assigned_identity.this.principal_id
-#   role_definition_name = "Storage Blob Data Contributor"
-# }
 
 #endregion
 #region Container Apps
