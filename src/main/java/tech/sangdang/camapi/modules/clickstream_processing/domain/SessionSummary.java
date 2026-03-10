@@ -1,0 +1,30 @@
+package tech.sangdang.camapi.modules.clickstream_processing.domain;
+
+import com.azure.spring.data.cosmos.core.mapping.Container;
+import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.Id;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data
+@NoArgsConstructor
+@SuperBuilder(toBuilder = true)
+@Container(containerName = "session_summaries")
+public class SessionSummary {
+    @Id
+    @Builder.Default
+    private String id = UUID.randomUUID().toString();
+    @PartitionKey
+    private String userId;
+    private Integer pageCount;
+    private Integer durationSec;
+    private LocalDateTime firstEventTime;
+    private LocalDateTime lastEventTime;
+    @Builder.Default
+    private LocalDateTime processedAt = LocalDateTime.now();
+}
