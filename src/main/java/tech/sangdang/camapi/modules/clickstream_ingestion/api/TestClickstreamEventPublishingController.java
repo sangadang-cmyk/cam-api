@@ -70,7 +70,7 @@ public class TestClickstreamEventPublishingController {
         String eventBody = objectMapper.writeValueAsString(eventDataDto);
         EventData eventData = new EventData(eventBody);
         return producerClient.send(Collections.singletonList(eventData))
-                .doOnSuccess(unused -> log.info("Published event: {}", eventBody))
+                .doOnSuccess(_ -> log.info("Published event: {}", eventBody))
                 .doOnError(error -> log.error("Failed to publish event: {}", eventBody, error));
     }
 }

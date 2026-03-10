@@ -1,6 +1,5 @@
 package tech.sangdang.camapi.modules.clickstream_ingestion.infra;
 
-import com.azure.data.schemaregistry.SchemaRegistryAsyncClient;
 import com.azure.data.schemaregistry.SchemaRegistryClient;
 import com.azure.data.schemaregistry.SchemaRegistryClientBuilder;
 import com.azure.identity.DefaultAzureCredential;
