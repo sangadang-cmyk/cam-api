@@ -9,6 +9,7 @@ locals {
     AZURE_STORAGE_ACCOUNT              = azurerm_storage_account.this.name
     AZURE_STORAGE_ACCOUNT_ENDPOINT     = "https://${azurerm_storage_account.this.name}.blob.core.windows.net"
     AZURE_STORAGE_CHECKPOINT_CONTAINER = azurerm_storage_container.evh_checkpoint.name
+    # This is the main full access client ID
     AZURE_MANAGED_IDENTITY_CLIENT_ID   = azurerm_user_assigned_identity.this.client_id
   }
   github_actions_config = {
@@ -19,8 +20,6 @@ locals {
     ACR_NAME              = azurerm_container_registry.this.name
     CONTAINER_APP_NAME    = azurerm_container_app.this.name
     RESOURCE_GROUP_NAME   = azurerm_resource_group.this.name
-    # This is the main full access client ID
-    AZURE_MANAGED_IDENTITY_CLIENT_ID   = azurerm_user_assigned_identity.this.client_id
   }
 }
 #endregion
