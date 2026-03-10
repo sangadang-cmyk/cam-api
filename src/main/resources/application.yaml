@@ -7,6 +7,9 @@ spring:
         endpoint: ${AZURE_COSMOS_ENDPOINT}
         database: ${AZURE_COSMOS_DATABASE}
         populate-query-metrics: true
+      credential:
+        client-id: ${AZURE_MANAGED_IDENTITY_CLIENT_ID}
+        managed-identity-enabled: true
   config:
     import:
       - optional:file:.env.infra[.properties]

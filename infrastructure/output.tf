@@ -19,7 +19,7 @@ locals {
     AZURE_TENANT_ID       = data.azurerm_client_config.current.tenant_id
     ACR_NAME              = azurerm_container_registry.this.name
     CONTAINER_APP_NAME    = azurerm_container_app.this.name
-    RESOURCE_GROUP_NAME   = azurerm_resource_group.this.name
+    RESOURCE_GROUP   = azurerm_resource_group.this.name
   }
 }
 #endregion
