@@ -13,6 +13,6 @@ import tech.sangdang.camapi.modules.clickstream_processing.app.service.SessionSu
 public class SessionSummaryCreationServiceImpl implements SessionSummaryCreationService {
     @Override
     public Mono<Void> createSessionSummaryFromEvent(CreateSessionSummaryFromEventCommand command) {
-        return null;
+        return Mono.empty();
     }
 }
