@@ -24,4 +24,3 @@ custom:
         schema-group-name: ${AZURE_EVENTHUB_SCHEMA_GROUP}
         schema-name: ClickstreamEvent
         schema-version: 1
-    disable-event-consumer: false

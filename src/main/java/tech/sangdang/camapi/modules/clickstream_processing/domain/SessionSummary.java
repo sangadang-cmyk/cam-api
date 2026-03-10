@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -26,4 +27,6 @@ public class SessionSummary {
     private LocalDateTime lastEventTime;
     @Builder.Default
     private LocalDateTime processedAt = LocalDateTime.now();
+    @Version
+    private String _etag;
 }
