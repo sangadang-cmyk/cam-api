@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClickstreamEvent",
+  "type": "object",
+  "properties": {
+    "userId": { "type": "string" },
+    "sessionId": { "type": "string" },
+    "eventType": { "type": "string" },
+    "pageUrl": { "type": "string" },
+    "timestamp": { "type": "integer" }
+  },
+  "required": ["userId", "sessionId", "eventType", "pageUrl", "timestamp"],
+  "additionalProperties": false
+}

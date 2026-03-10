@@ -7,3 +7,4 @@ spring:
 custom:
   azure:
     full-access-client-id: ${AZURE_MANAGED_IDENTITY_CLIENT_ID}
+    disable-event-consumer: false

@@ -5,16 +5,23 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
+import tech.sangdang.camapi.config.AzureConfigProperties;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class ClickstreamLifecycleManager implements SmartLifecycle {
     private final EventProcessorClient eventProcessorClient;
+    private final AzureConfigProperties azureConfigProperties;
     private volatile boolean running = false;
 
     @Override
     public void start() {
+        // NEVER LISTEN TO EVENTHUB WHEN RUNNING LOCALLY
+        if(azureConfigProperties.getDisableEventConsumer()) {
+            return;
+        }
+        
         if (!running) {
             log.info("Starting ClickstreamListener...");
             eventProcessorClient.start();

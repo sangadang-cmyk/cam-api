@@ -21,3 +21,7 @@ custom:
         storage-account-endpoint: ${AZURE_STORAGE_ACCOUNT_ENDPOINT}
         storage-container-name: ${AZURE_STORAGE_CHECKPOINT_CONTAINER}
         event-hub-namespace: ${AZURE_EVENTHUB_NAMESPACE}
+        schema-group-name: ${AZURE_EVENTHUB_SCHEMA_GROUP}
+        schema-name: ClickstreamEvent
+        schema-version: 1
+    disable-event-consumer: false

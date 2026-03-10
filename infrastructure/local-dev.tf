@@ -41,3 +41,10 @@ resource "azurerm_role_assignment" "local_this_evh_event_log" {
   principal_id         = data.azurerm_client_config.current.object_id
   role_definition_name = "Storage Blob Data Contributor"
 }
+
+resource "azurerm_role_assignment" "local_this_evh_schema_registry" {
+  count                = var.enabled_local_access ? 1 : 0
+  scope                = azurerm_eventhub_namespace_schema_group.this.id
+  principal_id         = data.azurerm_client_config.current.object_id
+  role_definition_name = "Schema Registry Reader"
+}

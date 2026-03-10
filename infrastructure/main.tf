@@ -133,6 +133,18 @@ resource "azurerm_storage_container" "evh_event_log" {
   storage_account_id    = azurerm_storage_account.this.id
   container_access_type = "private"
 }
+# Schema registry
+resource "azurerm_eventhub_namespace_schema_group" "this" {
+  name = "evh-sg-${var.core_app_code}-${var.core_environment}"
+  namespace_id = azurerm_eventhub_namespace.this.id
+  schema_compatibility = "None"
+  schema_type = "Json"
+}
+resource "azurerm_role_assignment" "this_evh_schema_registry" {
+  scope                = azurerm_eventhub_namespace_schema_group.this.id
+  principal_id         = azurerm_user_assigned_identity.this.principal_id
+  role_definition_name = "Schema Registry Reader"
+}
 
 #endregion
 #region Container Apps
@@ -196,9 +208,6 @@ resource "azurerm_container_app" "this" {
   registry {
     server   = azurerm_container_registry.this.login_server
     identity = azurerm_user_assigned_identity.this.id
-  }
-  lifecycle {
-    ignore_changes = [template.0.container.0.image] # Ignore image changes to prevent unnecessary redeployments during development
   }
 }
 #endregion

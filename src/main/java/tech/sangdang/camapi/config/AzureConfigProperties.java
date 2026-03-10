@@ -10,4 +10,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "custom.azure")
 public class AzureConfigProperties {
     private @NotBlank String fullAccessClientId;
+    private Boolean disableEventConsumer = true;
 }

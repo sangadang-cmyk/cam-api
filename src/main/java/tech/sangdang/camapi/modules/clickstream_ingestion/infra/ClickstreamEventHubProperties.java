@@ -16,6 +16,9 @@ public class ClickstreamEventHubProperties {
     private String consumerGroup = "$Default";
     private @NotBlank String storageAccountEndpoint;
     private @NotBlank String storageContainerName;
+    private @NotBlank String schemaGroupName;
+    private String schemaName = "ClickstreamEvent";
+    private Integer schemaVersion = 1;
     
     public String getEventHubFullyQualifiedNamespace() {
         return eventHubNamespace + ".servicebus.windows.net";

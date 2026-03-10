@@ -18,15 +18,20 @@ import java.time.ZoneOffset;
 @Service
 public class SessionSummaryCreationServiceImpl implements SessionSummaryCreationService {
     private final SessionSummaryRepository sessionSummaryRepository;
-    
+
+    /**
+     * note to self: this function needs to be idempotent
+     */
     @Override
     public Mono<Void> createSessionSummaryFromEvent(CreateSessionSummaryFromEventCommand command) {
         return sessionSummaryRepository.findById(command.getSessionId())
                 // if session id found
                 .flatMap(existing -> {
                     existing.setPageCount(existing.getPageCount() + 1);
-                    existing.setLastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC));
-                    existing.setDurationSec(calculateDurationSec(existing.getFirstEventTime(), existing.getLastEventTime()));
+                    if(existing.getLastEventTime() == null || existing.getLastEventTime().isBefore(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC))) {
+                        existing.setLastEventTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(command.getTimestamp()), ZoneOffset.UTC));
+                        existing.setDurationSec(calculateDurationSec(existing.getFirstEventTime(), existing.getLastEventTime()));
+                    }
                     return sessionSummaryRepository.save(existing);
                 })
                 // if session id not found
