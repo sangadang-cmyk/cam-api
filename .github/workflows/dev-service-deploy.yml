@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    name: Build docker image
+    name: Build docker image and push to ACR
     runs-on: ubuntu-latest
     environment: development
     permissions:
