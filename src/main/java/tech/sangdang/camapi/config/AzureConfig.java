@@ -20,7 +20,7 @@ public class AzureConfig {
     }
     
     @Bean
-    DefaultAzureCredential defaultAzureCredential() {
-        return new DefaultAzureCredentialBuilder().build();
+    DefaultAzureCredential defaultAzureCredential(DefaultAzureCredentialBuilder defaultAzureCredentialBuilder) {
+        return defaultAzureCredentialBuilder.build();
     }
 }
