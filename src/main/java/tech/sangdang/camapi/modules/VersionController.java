@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class VersionController {
     @GetMapping()
     public String getVersion() {
-        int version = 1;
+        int version = 2;
         return Integer.toString(version);
     }
 }
