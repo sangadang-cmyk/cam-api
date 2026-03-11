@@ -28,25 +28,35 @@ resource "azurerm_role_assignment" "github_actions_contributor" {
 }
 # Allows GitHub Actions to login using OIDC and get a token
 resource "azurerm_federated_identity_credential" "github_actions" {
-  name                = "fic-gha-${var.core_app_code}-${var.core_environment}"
-  parent_id           = azurerm_user_assigned_identity.github_actions.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  subject             = "repo:${var.github_org}/${var.github_repo}:environment:development"
+  name      = "fic-gha-${var.core_app_code}-${var.core_environment}"
+  parent_id = azurerm_user_assigned_identity.github_actions.id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  subject   = "repo:${var.github_org}/${var.github_repo}:environment:development"
 }
 #endregion
 #region Blob Storage
 resource "azurerm_storage_account" "this" {
-  name                     = "st${var.core_app_code}${var.core_environment}"
-  resource_group_name      = azurerm_resource_group.this.name
-  location                 = azurerm_resource_group.this.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
+  name                      = "st${var.core_app_code}${var.core_environment}"
+  resource_group_name       = azurerm_resource_group.this.name
+  location                  = azurerm_resource_group.this.location
+  account_tier              = "Standard"
+  account_replication_type  = "LRS"
+  shared_access_key_enabled = true
 }
 resource "azurerm_role_assignment" "this_storage_account" {
   scope                = azurerm_storage_account.this.id
   principal_id         = azurerm_user_assigned_identity.this.principal_id
   role_definition_name = "Storage Blob Data Contributor"
+}
+#endregion
+#region Logging
+resource "azurerm_log_analytics_workspace" "this" {
+  name                = "law-${var.core_app_code}-${var.core_environment}"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
 }
 #endregion
 #region CosmosDB
@@ -78,10 +88,10 @@ resource "azurerm_cosmosdb_sql_container" "session_summaries" {
 }
 resource "azurerm_cosmosdb_sql_role_assignment" "this" {
   resource_group_name = azurerm_resource_group.this.name
-  account_name = azurerm_cosmosdb_account.this.name
-  role_definition_id = "${azurerm_cosmosdb_account.this.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
-  principal_id = azurerm_user_assigned_identity.this.principal_id
-  scope = azurerm_cosmosdb_account.this.id
+  account_name        = azurerm_cosmosdb_account.this.name
+  role_definition_id  = "${azurerm_cosmosdb_account.this.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+  principal_id        = azurerm_user_assigned_identity.this.principal_id
+  scope               = azurerm_cosmosdb_account.this.id
 }
 #endregion
 #region EventHubs
@@ -91,6 +101,7 @@ resource "azurerm_eventhub_namespace" "this" {
   resource_group_name           = azurerm_resource_group.this.name
   sku                           = "Standard"
   public_network_access_enabled = true
+  local_authentication_enabled  = true
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.this.id]
@@ -135,10 +146,10 @@ resource "azurerm_storage_container" "evh_event_log" {
 }
 # Schema registry
 resource "azurerm_eventhub_namespace_schema_group" "this" {
-  name = "evh-sg-${var.core_app_code}-${var.core_environment}"
-  namespace_id = azurerm_eventhub_namespace.this.id
+  name                 = "evh-sg-${var.core_app_code}-${var.core_environment}"
+  namespace_id         = azurerm_eventhub_namespace.this.id
   schema_compatibility = "None"
-  schema_type = "Json"
+  schema_type          = "Json"
 }
 resource "azurerm_role_assignment" "this_evh_schema_registry" {
   scope                = azurerm_eventhub_namespace_schema_group.this.id
@@ -161,9 +172,11 @@ resource "azurerm_role_assignment" "this_acr" {
   role_definition_name = "AcrPull"
 }
 resource "azurerm_container_app_environment" "this" {
-  name                = "acaenv-${var.core_app_code}-${var.core_environment}"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
+  name                       = "acaenv-${var.core_app_code}-${var.core_environment}"
+  location                   = azurerm_resource_group.this.location
+  resource_group_name        = azurerm_resource_group.this.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
+  logs_destination           = "log-analytics"
 }
 resource "azurerm_container_app" "this" {
   name                         = "aca-${var.core_app_code}-${var.core_environment}"
@@ -175,7 +188,7 @@ resource "azurerm_container_app" "this" {
     allow_insecure_connections = true
     external_enabled           = true
     traffic_weight {
-      percentage = 100
+      percentage      = 100
       latest_revision = true
     }
   }
@@ -184,8 +197,30 @@ resource "azurerm_container_app" "this" {
     identity_ids = [azurerm_user_assigned_identity.this.id]
   }
   template {
-    min_replicas = 1
-    max_replicas = 1
+    min_replicas               = 0
+    max_replicas               = 5
+    cooldown_period_in_seconds = 60
+    custom_scale_rule {
+      name             = "eventhub-scaler"
+      custom_rule_type = "azure-eventhub"
+      metadata = {
+        consumerGroup             = "$Default"
+        unprocessedEventThreshold = "5"
+        blobContainer             = azurerm_storage_container.evh_checkpoint.name
+        checkpointStrategy        = "blobMetadata"
+        eventHubName              = azurerm_eventhub.this.name
+        eventHubNamespace         = azurerm_eventhub_namespace.this.name
+        storageAccountName        = azurerm_storage_account.this.name
+      }
+      authentication {
+        secret_name       = "eventhub-connection"
+        trigger_parameter = "connection"
+      }
+      authentication {
+        secret_name       = "storage-connection"
+        trigger_parameter = "storageConnection"
+      }
+    }
     container {
       name   = "app"
       image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
@@ -200,14 +235,38 @@ resource "azurerm_container_app" "this" {
         }
       }
       env {
-        name = "SPRING_PROFILES_ACTIVE"
+        name  = "SPRING_PROFILES_ACTIVE"
         value = "cloud-dev"
+      }
+      startup_probe {
+        port      = 80
+        transport = "TCP"
+        initial_delay = 60 # Wait Xs for the app to start up
+        interval_seconds = 10
+        failure_count_threshold = 10 # If after X attempts the app is still failing, then container is unhealthy
+        timeout = 5 # Wait 5s for each probe attempt before considering it a failure
       }
     }
   }
   registry {
     server   = azurerm_container_registry.this.login_server
     identity = azurerm_user_assigned_identity.this.id
+  }
+  secret {
+    name  = "eventhub-connection"
+    value = azurerm_eventhub_namespace.this.default_primary_connection_string
+  }
+  secret {
+    name  = "storage-connection"
+    value = azurerm_storage_account.this.primary_connection_string
+  }
+  lifecycle {
+    # This does work. But for some reason, Intellij flags this as an unresolved reference. Trust me bro
+    # What it does it ignore the image field in the container definition so it doesn't replace the existing container...
+    # noinspection HILUnresolvedReference
+    ignore_changes = [
+      template[0].container[0].image
+    ]
   }
 }
 #endregion
