@@ -1,6 +1,7 @@
 package tech.sangdang.camapi.modules.clickstream_processing.api;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -9,6 +10,7 @@ import tech.sangdang.camapi.modules.clickstream_processing.app.dto.query.FindByI
 import tech.sangdang.camapi.modules.clickstream_processing.app.dto.res.SessionSummaryResponse;
 import tech.sangdang.camapi.modules.clickstream_processing.app.service.SessionSummaryQueryService;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class SessionSummaryAdminControllerImpl implements SessionSummaryAdminController {
