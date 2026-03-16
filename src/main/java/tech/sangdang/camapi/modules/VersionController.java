@@ -11,16 +11,16 @@ import java.time.Duration;
 @RequestMapping("/version")
 @RestController
 public class VersionController {
+    private final Integer version = 3;
+    
     @GetMapping()
     public String getVersion() {
-        int version = 2;
         log.info("version: {}", version);  
         return Integer.toString(version);
     }
     
     @GetMapping("/slow")
     public String getSlowVersion() throws InterruptedException {
-        Integer version = 2;
         log.info("version: {}", version);
         Thread.sleep(Duration.ofSeconds(5));
         return version.toString();
