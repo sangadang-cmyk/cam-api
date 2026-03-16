@@ -1,0 +1,23 @@
+otelcol.receiver.otlp "default" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    logs    = [otelcol.exporter.otlphttp.grafana.input]
+    metrics = [otelcol.exporter.otlphttp.grafana.input]
+    traces  = [otelcol.exporter.otlphttp.grafana.input]
+  }
+}
+
+otelcol.exporter.otlphttp "grafana" {
+  client {
+    endpoint = env("GRAFANA_CLOUD_OTLP_ENDPOINT")
+    auth     = otelcol.auth.basic.grafana.handler
+  }
+}
+
+otelcol.auth.basic "grafana" {
+  username = "1555014"
+  password = env("GRAFANA_CLOUD_API_TOKEN")
+}

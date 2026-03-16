@@ -1,5 +1,9 @@
 server:
   port: ${PORT:80}
+#logging:
+#  level:
+#    root: WARN
+#    tech.sangdang.camapi: INFO
 spring:
   application:
     name: Clickstream Analytics Processor
@@ -12,6 +16,17 @@ spring:
   config:
     import:
       - optional:file:.env.infra[.properties]
+      - optional:file:.env[.properties]
+otel:
+  exporter:
+    otlp:
+      endpoint: http://localhost:4318
+      protocol: http/protobuf
+  resource:
+    attributes:
+      service.name: ${spring.application.name}
+      service.namespace: cam
+      deployment.environment: dev
 custom:
   azure:
     eventhubs:
