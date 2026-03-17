@@ -10,3 +10,14 @@ custom:
   azure:
     full-access-client-id: ${AZURE_MANAGED_IDENTITY_CLIENT_ID}
     disable-event-consumer: false
+otel:
+  exporter:
+    otlp:
+      endpoint: http://localhost:4318
+      protocol: http/protobuf
+  resource:
+    attributes:
+      service.name: ${spring.application.name}
+      service.namespace: cam
+      deployment.environment: dev
+      application: ${spring.application.name}
