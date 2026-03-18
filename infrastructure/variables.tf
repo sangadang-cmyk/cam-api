@@ -39,3 +39,23 @@ variable "github_repo" {
   default = "cam-api"
 }
 #endregion
+
+variable "app_container_name" {
+  type    = string
+  default = "app"
+}
+
+variable "sidecar_container_name" {
+  type    = string
+  default = "grafana-alloy"
+}
+
+variable "grafana_endpoint" {
+  type    = string
+  default = "n/a"
+}
+
+variable "grafana_api_key" {
+  type    = string
+  default = "n/a"
+}

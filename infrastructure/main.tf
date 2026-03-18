@@ -183,15 +183,16 @@ resource "azurerm_container_app" "this" {
   container_app_environment_id = azurerm_container_app_environment.this.id
   resource_group_name          = azurerm_resource_group.this.name
   revision_mode                = "Single"
-  ingress {
-    target_port                = 80
-    allow_insecure_connections = true
-    external_enabled           = true
-    traffic_weight {
-      percentage      = 100
-      latest_revision = true
-    }
-  }
+  # For some reason, when ingress is enabled, it automatically creates healthcheck probes. Since this service's only client is EventHubs, you don't actually need this
+  # ingress {
+  #   target_port                = 80
+  #   allow_insecure_connections = true
+  #   external_enabled           = true
+  #   traffic_weight {
+  #     percentage      = 100
+  #     latest_revision = true
+  #   }
+  # }
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.this.id]
@@ -205,7 +206,6 @@ resource "azurerm_container_app" "this" {
       custom_rule_type = "azure-eventhub"
       metadata = {
         consumerGroup             = "$Default"
-        unprocessedEventThreshold = "5"
         blobContainer             = azurerm_storage_container.evh_checkpoint.name
         checkpointStrategy        = "blobMetadata"
         eventHubName              = azurerm_eventhub.this.name
@@ -222,7 +222,7 @@ resource "azurerm_container_app" "this" {
       }
     }
     container {
-      name   = "app"
+      name   = var.app_container_name
       image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
       cpu    = 0.25
       memory = "0.5Gi"
@@ -238,13 +238,29 @@ resource "azurerm_container_app" "this" {
         name  = "SPRING_PROFILES_ACTIVE"
         value = "cloud-dev"
       }
-      startup_probe {
-        port      = 80
-        transport = "TCP"
-        initial_delay = 60 # Wait Xs for the app to start up
-        interval_seconds = 10
-        failure_count_threshold = 10 # If after X attempts the app is still failing, then container is unhealthy
-        timeout = 5 # Wait 5s for each probe attempt before considering it a failure
+      # startup_probe {
+      #   port      = 80
+      #   transport = "TCP"
+      #   initial_delay = 60 # Wait Xs for the app to start up
+      #   interval_seconds = 10
+      #   failure_count_threshold = 10 # If after X attempts the app is still failing, then container is unhealthy
+      #   timeout = 5 # Wait 5s for each probe attempt before considering it a failure
+      # }
+    }
+    container {
+      cpu = 0.25
+      memory = "0.5Gi"
+      image = "acrcamdev.azurecr.io/grafana-alloy-sidecar:9c64ab333bbadf4a519eb1b3d18c53b1402bcea0"
+      name = var.sidecar_container_name
+      
+      env {
+        name = "GRAFANA_CLOUD_OTLP_ENDPOINT"
+        value = var.grafana_endpoint
+      }
+      
+      env {
+        name = "GRAFANA_CLOUD_API_TOKEN"
+        value = var.grafana_api_key
       }
     }
   }
@@ -265,7 +281,8 @@ resource "azurerm_container_app" "this" {
     # What it does it ignore the image field in the container definition so it doesn't replace the existing container...
     # noinspection HILUnresolvedReference
     ignore_changes = [
-      template[0].container[0].image
+      template[0].container[0].image,
+      template[0].container[1].image
     ]
   }
 }

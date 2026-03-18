@@ -13,6 +13,11 @@ spring:
     import:
       - optional:file:.env.infra[.properties]
       - optional:file:.env[.properties]
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 custom:
   azure:
     eventhubs:

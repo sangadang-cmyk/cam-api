@@ -21,3 +21,9 @@ otel:
       service.namespace: cam
       deployment.environment: dev
       application: ${spring.application.name}
+  logs:
+    exporter: otlp
+  metrics:
+    exporter: otlp
+  traces:
+    exporter: otlp
